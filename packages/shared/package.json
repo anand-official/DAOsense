@@ -1,0 +1,19 @@
+{
+    "name": "@daosense/shared",
+    "version": "0.1.0",
+    "private": true,
+    "main": "./src/index.ts",
+    "types": "./src/index.ts",
+    "scripts": {
+        "typecheck": "tsc --noEmit",
+        "lint": "echo \"No linter configured yet\""
+    },
+    "devDependencies": {
+        "typescript": "^5.7.0"
+    },
+    "dependencies": {
+        "merkletreejs": "^0.4.0",
+        "js-sha256": "^0.11.0",
+        "keccak256": "^1.0.6"
+    }
+}
