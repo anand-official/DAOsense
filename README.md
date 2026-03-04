@@ -173,19 +173,6 @@ npm run deploy --network fuji
 
 ---
 
-## Hackathon Context
-
-**Event:** Avalanche Build Games 2026 — Stage 2 MVP  
-**Deadline:** March 9, 2026  
-**Category:** Governance / DeFi Tooling  
-
-Key Avalanche features utilized:
-- Post-Octane sub-penny transaction fees for on-chain batch submissions
-- Fuji testnet for development
-- Avalanche C-Chain for `ProposalVerifier` contract deployment
-
----
-
 ## License
 
 MIT © 2026 DAOSense
