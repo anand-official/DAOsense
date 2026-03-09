@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
 
 /**
  * @title ProposalVerifier
@@ -10,7 +11,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  * @dev Uses MerkleProof.verifyCalldata for ~30% gas savings over memory-based verify.
  *      Designed for Avalanche C-Chain with post-Octane sub-penny batch costs.
  */
-contract ProposalVerifier is Ownable {
+contract ProposalVerifier is Ownable, Pausable {
     struct Batch {
         bytes32 merkleRoot;
         uint256 timestamp;
@@ -31,7 +32,24 @@ contract ProposalVerifier is Ownable {
         uint256 timestamp
     );
 
+    /// @notice Emitted when a batch is revoked
+    event BatchRevoked(uint256 indexed batchId);
+
     constructor() Ownable(msg.sender) {}
+
+    /**
+     * @notice Pause verification in case of an emergency.
+     */
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    /**
+     * @notice Unpause verification.
+     */
+    function unpause() external onlyOwner {
+        _unpause();
+    }
 
     /**
      * @notice Submit a new Merkle root for a batch of proposal+summary hash pairs.
@@ -63,7 +81,7 @@ contract ProposalVerifier is Ownable {
         uint256 _batchId,
         bytes32[] calldata _proof,
         bytes32 _leaf
-    ) external view returns (bool) {
+    ) external view whenNotPaused returns (bool) {
         require(_batchId < batchCount, "Batch does not exist");
         return MerkleProof.verifyCalldata(
             _proof,
@@ -87,5 +105,17 @@ contract ProposalVerifier is Ownable {
         require(_batchId < batchCount, "Batch does not exist");
         Batch memory batch = batches[_batchId];
         return (batch.merkleRoot, batch.timestamp, batch.leafCount);
+    }
+
+    /**
+     * @notice Revoke a batch by setting its root to zero, to nullify any proofs.
+     * @param _batchId The ID of the batch to revoke.
+     */
+    function revokeBatch(uint256 _batchId) external onlyOwner {
+        require(_batchId < batchCount, "Batch does not exist");
+        require(batches[_batchId].merkleRoot != bytes32(0), "Batch already revoked");
+        
+        batches[_batchId].merkleRoot = bytes32(0);
+        emit BatchRevoked(_batchId);
     }
 }

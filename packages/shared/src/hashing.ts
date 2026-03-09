@@ -1,4 +1,5 @@
 import { sha256 } from 'js-sha256';
+import keccak256 from 'keccak256';
 import type { SummaryResult } from './types';
 
 /**
@@ -35,10 +36,10 @@ export function hashSummary(summary: SummaryResult): string {
  * Uses keccak256(proposalHash + summaryHash) for EVM compatibility.
  */
 export function computeLeaf(proposalHash: string, summaryHash: string): Buffer {
-    const keccak256 = require('keccak256');
     const combined = Buffer.concat([
         Buffer.from(proposalHash, 'hex'),
         Buffer.from(summaryHash, 'hex'),
     ]);
-    return keccak256(combined);
+    // Double hash the combined buffer to prevent 64-byte second preimage attacks
+    return keccak256(keccak256(combined));
 }

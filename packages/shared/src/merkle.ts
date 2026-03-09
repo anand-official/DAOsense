@@ -1,5 +1,5 @@
 import { MerkleTree } from 'merkletreejs';
-const keccak256 = require('keccak256');
+import keccak256 from 'keccak256';
 
 /**
  * Build a Merkle tree from an array of leaf buffers.

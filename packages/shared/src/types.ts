@@ -42,12 +42,31 @@ export interface FinancialImpact {
     confidence: ConfidenceLevel;
 }
 
+/** Proposal Categories */
+export type ProposalType = 'grant' | 'parameter_update' | 'contract_upgrade' | 'treasury_diversification' | 'other';
+export type VoteRecommendation = 'for' | 'against' | 'abstain';
+export type DecisionRiskLevel = 'low' | 'medium' | 'high';
+
+/** Decision card shown to voters for quick action */
+export interface DecisionCard {
+    vote_recommendation: VoteRecommendation;
+    rationale: string[];
+    risk_level: DecisionRiskLevel;
+    risk_confidence: ConfidenceLevel;
+    expected_change: string;
+}
+
+/** Evidence quality for explainability mapping */
+export type EvidenceStatus = 'supported' | 'weak';
+
 /** Complete AI-generated summary result */
 export interface SummaryResult {
     summary: string[];
     key_points: KeyPoint[];
     risks: Risk[];
+    proposal_type: ProposalType;
     financial_impact: FinancialImpact | null;
+    decision_card: DecisionCard;
     overall_confidence: number; // 0-1 scale
 }
 

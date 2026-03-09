@@ -1,178 +1,139 @@
-# DAOSense 🔺
+# DAOSense
 
-> AI-powered governance copilot for Avalanche DAOs — verified on-chain summaries, delivered in seconds.
+AI governance command center for Avalanche DAOs.  
+DAOSense helps delegates and contributors **detect what matters, decide faster, and prove integrity**.
 
-Built for the **Avalanche Build Games 2026** hackathon.
+## Why DAOSense
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Built with Next.js](https://img.shields.io/badge/Next.js-16-black)](https://nextjs.org)
-[![Powered by Gemini](https://img.shields.io/badge/AI-Gemini%202.0%20Flash-blue)](https://ai.google.dev)
-[![Avalanche](https://img.shields.io/badge/Chain-Avalanche-red)](https://avax.network)
+DAO proposals are often long, technical, and time-sensitive. DAOSense converts proposal text into actionable intelligence:
 
----
+- Decision-ready AI summaries (not just text condensation)
+- Evidence-linked claims for trust and auditability
+- Staged blockchain verification with explicit status
+- Reliability and freshness signals on the dashboard
 
-## What is DAOSense?
+## Core Capabilities
 
-DAOSense transforms dense DAO governance proposals into clear, verifiable AI summaries. Any token holder can understand what's being proposed, spot risks, and verify the summary authenticity on-chain — all in under 2 minutes.
+- **Decision Layer**
+  - Vote recommendation: `for` / `against` / `abstain`
+  - 2-line rationale
+  - Risk level + confidence
+  - Expected governance/financial change
+- **Explainability Layer**
+  - Claim-to-source mapping for key points
+  - Evidence quality surfaced in UI
+- **Verification Layer**
+  - Distinct states: batched in DB -> submitted on-chain -> on-chain verified
+  - Action hints when chain submission config is missing
+- **Reliability Layer**
+  - Health endpoint and freshness status
+- **Personalization**
+  - Watchlist preferences and "Today For You" feed
 
-**Core problem:** DAO governance participation is typically <5% because proposals are long, technical, and hard to parse.
+## High-Level Architecture
 
-**Solution:** AI-powered 3-bullet summaries with confidence scores, financial impact detection, and Merkle-verified integrity.
+1. Snapshot proposals are fetched via API/cron
+2. Proposals and summaries are persisted in Supabase
+3. Gemini analyzes proposal text and returns structured summary output
+4. Merkle batches are created for verification
+5. Batch roots are submitted to `ProposalVerifier.sol` (when configured)
+6. Next.js app presents decisions, evidence, and verification state
 
----
+## Monorepo Layout
 
-## Features
-
-- 🤖 **Gemini 2.0 Flash AI** — tiered prompt routing (simple vs. chain-of-thought) with confidence scoring
-- 🔗 **On-chain verification** — Merkle batch hashing of proposals + summaries, stored via `ProposalVerifier.sol`
-- 📊 **Live dashboard** — real-time proposals from Snapshot (Trader Joe, Benqi, Pangolin & more)
-- ⚠️ **Low-confidence warnings** — flags uncertain summaries with source citation validation
-- 🕐 **Hourly cron sync** — automatic proposal fetching via Vercel cron jobs
-- 🆓 **$0/month hosting** — Vercel Hobby + Supabase Free + Gemini Free Tier
-
----
-
-## Architecture
-
-```
-Snapshot GraphQL API
-        ↓
-  Hourly Cron Job (/api/cron/fetch-proposals)
-        ↓
-  Supabase PostgreSQL (proposals, summaries, batches)
-        ↓
-  Gemini 2.0 Flash AI (tiered router + confidence scoring)
-        ↓
-  Merkle Batch Builder → ProposalVerifier.sol (Avalanche)
-        ↓
-  Next.js Dashboard (dark theme, Avalanche-inspired)
-```
-
-### Monorepo Structure
-
-```
-DAOSense/
-├── packages/
-│   ├── shared/          # Types, hashing, Merkle utilities
-│   ├── contracts/       # ProposalVerifier.sol + Hardhat
-│   └── web/             # Next.js app (frontend + API)
-│       ├── app/
-│       │   ├── page.tsx                        # Dashboard home
-│       │   ├── proposals/[id]/page.tsx         # Proposal detail
-│       │   └── api/
-│       │       ├── proposals/route.ts
-│       │       ├── summaries/[id]/route.ts
-│       │       ├── verify/[id]/route.ts
-│       │       └── cron/fetch-proposals/route.ts
-│       └── lib/
-│           ├── db.ts                  # Supabase client
-│           ├── gemini.ts              # Gemini AI client
-│           ├── adapters/snapshot.ts   # Snapshot GraphQL adapter
-│           ├── ai/                    # Router, prompts, confidence
-│           └── verification/          # Batch builder, submitter
+```text
+packages/
+  contracts/   # Solidity + Hardhat deployment/tests
+  shared/      # Shared types, hashing, Merkle helpers
+  web/         # Next.js app (UI + API routes)
 ```
 
----
+## Tech Stack
 
-## Getting Started
+- Frontend/API: Next.js 16, React, TypeScript
+- AI: Gemini 2.0 Flash
+- Database: Supabase Postgres
+- Chain: Avalanche C-Chain (Fuji/Mainnet)
+- Contracts: Hardhat 3, Solidity 0.8.x
+- Monorepo: Turborepo
+
+## Quick Start
 
 ### Prerequisites
 
 - Node.js 18+
 - npm 9+
 
-### 1. Clone & Install
+### Install
 
 ```bash
-git clone https://github.com/anand-official/DAOsense.git
-cd DAOsense
 npm install
 ```
 
-### 2. Configure Environment
+### Environment
 
-```bash
-cp .env.example .env
-```
-
-Fill in `.env`:
+Create `.env` in repo root:
 
 ```env
 # Supabase
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
 
-# Gemini AI (get from aistudio.google.com/apikey)
-GEMINI_API_KEY=your_gemini_key
+# AI
+GEMINI_API_KEY=
 
-# Avalanche Fuji Testnet
+# Avalanche + verifier (required for on-chain submission)
 FUJI_RPC_URL=https://api.avax-test.network/ext/bc/C/rpc
-DEPLOYER_PRIVATE_KEY=your_wallet_private_key
-NEXT_PUBLIC_VERIFIER_CONTRACT_ADDRESS=deployed_contract_address
+MAINNET_RPC_URL=https://api.avax.network/ext/bc/C/rpc
+DEPLOYER_PRIVATE_KEY=
+NEXT_PUBLIC_VERIFIER_CONTRACT_ADDRESS=
 
-# Vercel Cron
-CRON_SECRET=your_cron_secret
+# Cron protection
+CRON_SECRET=
 ```
 
-### 3. Set Up Database
-
-Run `packages/web/lib/db/schema.sql` in your Supabase SQL Editor.
-
-### 4. Run Dev Server
+### Run Locally
 
 ```bash
-npm run dev --workspace=@daosense/web
-# → http://localhost:3000
+npm run dev
 ```
 
-### 5. Fetch Proposals (trigger cron manually)
+### Pre-Release Checks
 
 ```bash
-curl -H "Authorization: Bearer your_cron_secret" \
-  http://localhost:3000/api/cron/fetch-proposals
+npm run lint
+npm run typecheck
+npm run test
+npm run build
 ```
 
----
+## Key API Endpoints
 
-## Smart Contract
+- `GET /api/proposals`
+- `GET /api/summaries/[proposalId]`
+- `POST /api/summaries/[proposalId]`
+- `GET /api/verify/[proposalId]`
+- `GET /api/cron/fetch-proposals`
+- `GET /api/health`
+- `GET|POST /api/preferences`
+- `POST /api/metrics/event`
 
-`ProposalVerifier.sol` stores Merkle roots of (proposal hash, summary hash) pairs on Avalanche, enabling trustless verification.
+## Production Notes
 
-```bash
-cd packages/contracts
-npm run compile
-npm run deploy --network fuji
-```
+- If verifier env vars are missing, verification remains in non-final stages by design.
+- Ensure Supabase schema includes:
+  - `proposals`, `summaries`, `batches`
+  - `user_preferences`
+  - `metrics_events`
+- Keep cron secret enabled in all non-local environments.
 
----
+## Release Documentation
 
-## API Routes
+For latest production-preflight logs, cleanup actions, and release checklist, see:
 
-| Route | Method | Description |
-|-------|--------|-------------|
-| `/api/proposals` | GET | List all proposals (filter by `?space=`) |
-| `/api/summaries/[id]` | GET/POST | Get or generate AI summary |
-| `/api/verify/[id]` | GET | Get Merkle proof for on-chain verification |
-| `/api/cron/fetch-proposals` | GET | Trigger proposal sync + AI summarization |
-
----
-
-## Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Frontend | Next.js 16, React, TypeScript |
-| Styling | Vanilla CSS, glassmorphism dark theme |
-| AI | Google Gemini 2.0 Flash |
-| Database | Supabase (PostgreSQL) |
-| Blockchain | Avalanche C-Chain, viem |
-| Data Source | Snapshot.org GraphQL API |
-| Hosting | Vercel (Hobby tier — free) |
-| Monorepo | Turborepo |
-
----
+- `RELEASE_PREPROD_REPORT.md`
 
 ## License
 
-MIT © 2026 DAOSense
+MIT
